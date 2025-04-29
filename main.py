@@ -2,16 +2,19 @@ from flask import *
 import csv
 import io
 import os
+import requests as req
 import threading
 import time
 from PIL import Image, ImageDraw, ImageFont
 import zipfile
 
+PREFIX = 'http://localhost:5000'
+
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'  # Add a secret key for session management and flash messages
 
 ALLOWED_EXTENSIONS = ['csv']
-TEMPLATE_PATH = "./static/img/template.png"
+TEMPLATE_PATH = "/static/img/template.png"
 OUTPUT_IMAGES_PATH = './static/output/img'
 OUTPUT_PDF_PATH = './static/output/pdf/output.pdf'
 OUTPUT_ZIP_PATH = './static/output/zip'
@@ -52,7 +55,7 @@ def convertToPDF():
     image_files.sort()
 
     # Open images
-    images = [Image.open(os.path.join(OUTPUT_IMAGES_PATH, file)).convert("RGB") for file in image_files]
+    images = [Image.open(req.get(PREFIX + OUTPUT_IMAGES_PATH + file)).convert("RGB") for file in image_files]
 
     # Save as a single PDF
     if images:
@@ -67,7 +70,8 @@ def generateCertifcates(data):
     print(data.keys())
     
     #Load the template image
-    template = Image.open(TEMPLATE_PATH).convert("RGB")
+    res = req.get(PREFIX + TEMPLATE_PATH)
+    template = Image.open(io.BytesIO(res)).convert("RGB")
 
     #Load the Drawing context
     draw = ImageDraw.Draw(template)
@@ -119,8 +123,8 @@ def index():
         time2 = time.perf_counter()
         print(f"Time taken: {time2-time1} seconds")
         print(f"Total certificate generated: {len(data_list)}")
-        print(request.form["outputType"])
-        if request.form["outputType"] == 1:
+        print(request.form["outputType"] == '1')
+        if request.form["outputType"] == '1':
             convertToPDF()
             clear_image_folder(OUTPUT_IMAGES_PATH)
             return send_file(OUTPUT_PDF_PATH, as_attachment=True)
