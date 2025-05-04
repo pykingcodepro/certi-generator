@@ -143,12 +143,6 @@ def index():
             clear_image_folder(OUTPUT_IMAGES_PATH)
             return send_file(OUTPUT_ZIP_PATH + '/certificates.zip', as_attachment=True)
             
-
-        # if "Name" not in data_list[0].keys() or "Date" not in data_list[0].keys() or "Event" not in data_list[0].keys():
-        #     flash("Error in structure of CSV file.\n It should have only Name, Event and Date columns")
-        #     return redirect(url_for('index'))
-        
-        return f"<pre>{data_list}</pre><pre>{[NAME_KEY, DATE_KEY, EVENT_KEY]}</pre>"
     
     # GET method part
     return render_template('index.html')
