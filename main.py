@@ -20,6 +20,7 @@ FONT_PATH = './static/font/Roboto-Regular.ttf'
 FONT_SIZE = 60
 FONT_COLOR = (0, 0, 0)
 TEXT_POSITION = (700, 600)
+NAME_KEY = DATE_KEY = EVENT_KEY = None
 
 
 def zip_images(image_folder, output_folder=OUTPUT_ZIP_PATH, zip_name="certificates.zip", extensions=(".jpg", ".png")):
@@ -49,6 +50,7 @@ def clear_image_folder(folder_path, extensions=['.jpg']):
 def convertToPDF():
 
     # Load all images
+    os.makedirs(OUTPUT_IMAGES_PATH, exist_ok=True)
     image_files = [f for f in os.listdir(OUTPUT_IMAGES_PATH) if f.endswith('.jpg')]
     image_files.sort()
 
@@ -76,7 +78,7 @@ def generateCertifcates(data):
     #Load the font
     font = ImageFont.truetype(FONT_PATH, FONT_SIZE)
 
-    draw.text(TEXT_POSITION, data['Name'], font=font, fill=FONT_COLOR)
+    draw.text(TEXT_POSITION, data[NAME_KEY], font=font, fill=FONT_COLOR)
 
     output_file = f"{OUTPUT_IMAGES_PATH}/{data['Name'].replace(' ', '_')}_certificate.jpg"
     template.save(output_file)
@@ -105,10 +107,21 @@ def index():
         csv_input = csv.DictReader(stream)
         data_list = [row for row in csv_input]
         # print(data_list)
-        if "Name" not in data_list[0].keys() or "Date" not in data_list[0].keys() or "Event" not in data_list[0].keys():
-            flash("Error in structure of CSV file.\n It should have only Name, Event and Date columns")
+
+        
+        for key in data_list[0].keys():
+            if key.strip().lower() == "name" or key.strip().lower() == "names":
+                NAME_KEY = key
+            elif key.strip().lower() == "date" or key.strip().lower() == "dates":
+                DATE_KEY = key
+            elif key.strip().lower() == "event" or key.strip().lower() == "events":
+                EVENT_KEY = key
+        
+        if not (NAME_KEY and DATE_KEY and EVENT_KEY):
+            flash("Error in structure of CSV file.\n It atleast have Name, Event and Date columns")
             return redirect(url_for('index'))
         
+
         time1 = time.perf_counter()
         thread_list = []
         for data in data_list:
@@ -129,9 +142,16 @@ def index():
             zip_images(OUTPUT_IMAGES_PATH)
             clear_image_folder(OUTPUT_IMAGES_PATH)
             return send_file(OUTPUT_ZIP_PATH + '/certificates.zip', as_attachment=True)
+            
+
+        # if "Name" not in data_list[0].keys() or "Date" not in data_list[0].keys() or "Event" not in data_list[0].keys():
+        #     flash("Error in structure of CSV file.\n It should have only Name, Event and Date columns")
+        #     return redirect(url_for('index'))
+        
+        return f"<pre>{data_list}</pre><pre>{[NAME_KEY, DATE_KEY, EVENT_KEY]}</pre>"
     
     # GET method part
     return render_template('index.html')
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)
