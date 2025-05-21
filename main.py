@@ -67,7 +67,9 @@ def convertToPDF():
 
 def generateCertifcates(data):
     # This function generates certificates based on the provided data
-    print(data.keys())
+    # print(data)
+    # print(NAME_KEY)
+    # return
     
     #Load the template image
     template = Image.open(TEMPLATE_PATH).convert("RGB")
@@ -88,12 +90,13 @@ def generateCertifcates(data):
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
+    global NAME_KEY, DATE_KEY, EVENT_KEY
     if request.method == 'POST':
         if 'file' not in request.files:
             flash("No File Part in the form")
             return redirect(url_for('index'))
         
-        file = request.files['file']
+        file = request.files['CSVFile']
         if file.filename == '':
             flash("No File selected.")
             return redirect(url_for('index'))
@@ -116,6 +119,7 @@ def index():
                 DATE_KEY = key
             elif key.strip().lower() == "event" or key.strip().lower() == "events":
                 EVENT_KEY = key
+            
         
         if not (NAME_KEY and DATE_KEY and EVENT_KEY):
             flash("Error in structure of CSV file.\n It atleast have Name, Event and Date columns")
@@ -133,6 +137,8 @@ def index():
         time2 = time.perf_counter()
         print(f"Time taken: {time2-time1} seconds")
         print(f"Total certificate generated: {len(data_list)}")
+        # print(data_list[0][NAME_KEY])
+        # return "Hi"
         print(request.form["outputType"] == '1')
         if request.form["outputType"] == '1':
             convertToPDF()
